@@ -1,0 +1,49 @@
+---
+- name: Setup kubectl on Ansible control node for EKS access
+  hosts: localhost
+  gather_facts: false
+  vars:
+    cluster_name: EKS-AutoMode-Cluster
+    region: ap-souuth-1
+
+  tasks:
+    - name: Ensure AWS CLI is installed
+      ansible.builtin.command: aws --version
+      register: aws_cli_check
+      ignore_errors: yes
+
+    - name: Install AWS CLI v2 if not installed
+      ansible.builtin.shell: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip -o awscliv2.zip
+        sudo ./aws/install
+      when: aws_cli_check.rc != 0
+
+    - name: Ensure kubectl is installed
+      ansible.builtin.command: kubectl version --client
+      register: kubectl_check
+      ignore_errors: yes
+
+    - name: Install kubectl if not installed
+      ansible.builtin.shell: |
+        curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
+      when: kubectl_check.rc != 0
+
+    - name: Generate kubeconfig using aws eks update-kubeconfig
+      ansible.builtin.command: >
+        aws eks update-kubeconfig
+        --name {{ EKS-AutoMode-Cluster }}
+        --region {{ ap-south-1 }}
+      environment:
+        AWS_PROFILE: default  # Optional, if you're using named AWS profile
+
+    - name: Validate kubectl config
+      ansible.builtin.command: kubectl get nodes
+      register: kubectl_nodes
+      ignore_errors: yes
+
+    - name: Debug kubectl output
+      ansible.builtin.debug:
+        var: kubectl_nodes.stdout
