@@ -16,6 +16,7 @@ Tools used in this project:
  1.AWS CLI - To configure the environment to connect to AWS
  2.Terraform - IaaC
  3.Ansible   - Configuration Management
+ 4.Kubernetes - Cointainer Orchestration
 
 
 Step-by-step guide to provision infrastructure and deploy the application:
